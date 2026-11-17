@@ -62,6 +62,9 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **`off_panel: [left]` is a finding, no longer a crash** (#352). An `off_panel:` written as a
+  list or a mapping ended `scenet check` and `scenet build` with a `TypeError`; it is now one
+  `invalid-field` finding at the value, naming the four sides.
 - **A comic script's panel directives locate their own faults** (#473). A bad puppet in an `@cast:`
   or a missing font in an `@lettering:` is reported at the directive's line, while faults in
   front-matter declarations still point there and are reported once.
