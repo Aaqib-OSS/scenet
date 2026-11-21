@@ -385,7 +385,20 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
                 printed, live_text=args.live_text, fonts=book.fonts, pages=book.pages
             )
         for note in notes:
-            print(f"note: {note}")
+            print(f"note: {note}", file=sys.stderr)
+
+        # Use the checker's one diagnostic path so a build reports exactly the notes
+        # `scenet check --deep` would report for this source.
+        for item in diagnose_file(source, deep=True):
+            if item.level != "note":
+                continue
+            where = item.source if item.source else source
+            line = item.region.start.line if item.region else 1
+            column = item.region.start.column if item.region else 1
+            print(
+                f"{where}:{line}:{column}: note: {item.rule}: {item.message}",
+                file=sys.stderr,
+            )
     return 0
 
 

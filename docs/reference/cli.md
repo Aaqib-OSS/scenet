@@ -116,12 +116,14 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
   *Since 0.13.*
 
 `--quiet`
-: Suppress the `wrote` and `note:` lines. You do not normally want this: the notes are
-  where the compiler tells you it did something you did not ask for. Each kind has a name,
-  listed with what to do about it in
-  [Work out why a panel looks wrong](../howto/debug_a_layout.md#1-read-the-notes) — all but
-  what the build says about its files: a linked picture written away from its document, and
-  what `--pdf` leaves out.
+: Suppress the `wrote` and `note:` lines. Without it, build writes notes to stderr:
+  compiler decisions, notes from the same deep diagnostic pass as `scenet check --deep`,
+  and what print leaves out. The diagnostic notes use the same rule, message and source
+  location as `check`, so a word-limit note is visible whether you build or check. This
+  includes a linked picture written away from its document and what `--pdf` leaves out.
+  You do not normally want this: the notes are where the compiler tells you it did something
+  you did not ask for. Each kind has a name, listed with what to do about it in
+  [Work out why a panel looks wrong](../howto/debug_a_layout.md#1-read-the-notes).
   *Since 0.1.*
 
 `--watch`

@@ -463,7 +463,9 @@ def render_panel(
         ~mcp.server.mcpserver.exceptions.ToolError: The document does not compile. The
             message lists every finding.
     """
-    book = _compile(source, syntax, _files(files))
+    sent = _files(files)
+    book = _compile(source, syntax, sent)
+    findings = _diagnose(source, syntax, deep=True, files=sent)
     results = book.panels
     count = f"{len(results)} panel{'' if len(results) == 1 else 's'}"
     pages = f" and {len(book.pages)} page{'' if len(book.pages) == 1 else 's'}"
@@ -473,10 +475,40 @@ def render_panel(
     lines.extend(
         f"note ({name}): {note}" for name, result in results.items() for note in result.notes
     )
+    diagnostic_notes = [item for item in findings if item.level == "note"]
+    lines.extend(
+        f"note ({item.rule} at "
+        f"{item.region.start.line if item.region else 1}:"
+        f"{item.region.start.column if item.region else 1}): {item.message}"
+        for item in diagnostic_notes
+    )
+    structured_notes = [
+        {
+            "kind": "diagnostic",
+            "rule": f"{RULE_NAMESPACE}/{item.rule}",
+            "message": item.message,
+            "where": ".".join(str(step) for step in item.path),
+            "line": item.region.start.line if item.region else 1,
+            "column": item.region.start.column if item.region else 1,
+        }
+        for item in diagnostic_notes
+    ]
+    structured_notes.extend(
+        {"kind": "compiler", "panel": name, "rule": note.rule, "message": note.message}
+        for name, result in results.items()
+        for note in result.notes
+    )
     # SVG goes out as an embedded resource and never as an image block. Hosts pass image
     # blocks to the model, and model APIs that accept images do not accept SVG -- so an
     # image block would fail the whole turn rather than show a picture.
     blocks: list[TextContent | EmbeddedResource] = [TextContent(type="text", text="\n".join(lines))]
+    if structured_notes:
+        blocks.append(
+            TextContent(
+                type="text",
+                text=json.dumps({"notes": structured_notes}, ensure_ascii=False, sort_keys=True),
+            )
+        )
     blocks.extend(
         EmbeddedResource(
             type="resource",

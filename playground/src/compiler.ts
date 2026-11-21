@@ -236,7 +236,7 @@ def _scenet_compile(source, kind):
             "pages": len(pages),
             # A document that compiles has no error, but may have notes -- a balloon over
             # the words a publisher asks for -- which the editor shows as information.
-            "findings": _scenet_check(source, kind, deep=False),
+            "findings": _scenet_check(source, kind, deep=True),
         })
     except Exception as exc:
         return json.dumps({

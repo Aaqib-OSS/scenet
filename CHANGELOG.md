@@ -85,6 +85,10 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **Build reports the checker's notes** (#449): `scenet build` writes every note from
+  the same deep diagnostic pass as `scenet check --deep` to stderr, unless `--quiet`. The
+  playground runs that same deep pass for YAML and comic scripts, and MCP render includes
+  diagnostic notes in its machine-readable notes block.
 - **The JSON Schemas accept exactly what `scenet check` accepts** (#353), for every rule a schema
   can state; a property test holds the two to each other on generated panels and scenes, and
   names the rules no schema can (an id the cast must have, a file that must be read, arithmetic
