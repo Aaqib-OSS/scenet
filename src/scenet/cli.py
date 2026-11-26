@@ -24,6 +24,7 @@ from scenet.emit.pdf import print_notes, printed_panels, render_pdf
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.errors import ScenetError
+from scenet.paths import within
 from scenet.pipeline import FRONTENDS, Book, compile_book_file
 from scenet.schema import artwork_schema, panel_schema, puppet_schema, scene_schema
 from scenet.watch import watch_loop
@@ -163,6 +164,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="rebuild when a source or compilation dependency changes",
     )
+    build.add_argument(
+        "--root",
+        type=Path,
+        metavar="DIR",
+        help=(
+            "the folder every file a document names must be inside, through .. or a symbolic "
+            "link; by default, the nearest folder above the document holding a scenet.toml, "
+            "else the document's own"
+        ),
+    )
 
     check = subcommands.add_parser(
         "check",
@@ -212,6 +223,16 @@ def build_parser() -> argparse.ArgumentParser:
             "also run the full compiler on documents that pass every cheap check, to "
             "additionally catch layout and balloon-placement failures; costs a real "
             "compile, including font metrics, so off by default"
+        ),
+    )
+    check.add_argument(
+        "--root",
+        type=Path,
+        metavar="DIR",
+        help=(
+            "the folder every file a document names must be inside, through .. or a symbolic "
+            "link; by default, the nearest folder above the document holding a scenet.toml, "
+            "else the document's own"
         ),
     )
 
@@ -355,11 +376,15 @@ def _run_build_once(args: argparse.Namespace, dependencies: set[Path] | None = N
     if not source.exists():
         print(f"scenet: no such file: {source}", file=sys.stderr)
         return 2
-    if _refuse_unsupported([source]) or _refuse_output(args.output):
+    if (
+        _refuse_unsupported([source])
+        or _refuse_output(args.output)
+        or _refuse_root(args.root, [source])
+    ):
         return 2
 
     try:
-        book = compile_book_file(source, dependencies=dependencies)
+        book = compile_book_file(source, dependencies=dependencies, root=args.root)
     except ScenetError as exc:
         print(f"scenet: {_compile_failure(exc)}", file=sys.stderr)
         return 1
@@ -702,6 +727,23 @@ def _refuse_output(written: str | None) -> bool:
     return True
 
 
+def _refuse_root(root: Path | None, sources: Sequence[Path]) -> bool:
+    """Report a `--root` that is not a folder, or that does not hold every document.
+
+    Returns:
+        Whether it was refused.
+    """
+    if root is None:
+        return False
+    if not root.is_dir():
+        print(f"scenet: --root {root} is not a folder", file=sys.stderr)
+        return True
+    outside = [source for source in sources if not within(source, root)]
+    for source in outside:
+        print(f"scenet: {source} is outside --root {root}, which must hold it", file=sys.stderr)
+    return bool(outside)
+
+
 def _refuse_directory(output: Path | None) -> bool:
     """Report an `-o` that names a directory, for a command that writes one file.
 
@@ -738,12 +780,16 @@ def run_check(args: argparse.Namespace) -> int:
         return 2
     # Checked as `build` would read it, or not at all: calling a file `build` refuses
     # "ok" would be a confident false clean.
-    if _refuse_unsupported(sources) or _refuse_directory(args.output):
+    if (
+        _refuse_unsupported(sources)
+        or _refuse_directory(args.output)
+        or _refuse_root(args.root, sources)
+    ):
         return 2
 
     found: list[Diagnostic] = []
     for path in sources:
-        found.extend(diagnose_file(path, deep=args.deep))
+        found.extend(diagnose_file(path, deep=args.deep, root=args.root))
     # A note reports a house limit, and the document still compiles: only an error fails.
     status = 1 if any(item.level == "error" for item in found) else 0
 

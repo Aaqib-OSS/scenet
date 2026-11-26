@@ -47,7 +47,7 @@ import yaml
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
-from scenet import __version__
+from scenet import __version__, limits
 from scenet.assets.artwork import load_contract, pictureless, undrawn
 from scenet.assets.contract import (
     PuppetLibrary,
@@ -126,7 +126,7 @@ from scenet.namespace import (
     split_head,
     stripped,
 )
-from scenet.paths import Folder, NamedFileError
+from scenet.paths import Folder, MarkerError, NamedFileError, read_bounded, reading_within
 from scenet.pipeline import CompileNoteRule, compile_book, compile_ir, compile_script
 from scenet.safe_yaml import ProfileError, describe, load
 from scenet.solve.page import resolve_frames
@@ -1841,6 +1841,7 @@ def diagnose_source(
     base: Folder | None = None,
     library: PuppetLibrary | None = None,
     deep: bool = False,
+    root: Path | None = None,
 ) -> list[Diagnostic]:
     """Check a document and report everything wrong with it, without raising.
 
@@ -1865,6 +1866,9 @@ def diagnose_source(
             to additionally catch `layout` and `balloon-placement` -- at the cost of a
             real compile, including font metrics. Off by default so `check` stays the
             cheap pass it is documented as.
+        root: The folder every file the document names must be inside. Defaults to the
+            nearest folder at or above the document's that holds a `scenet.toml`, else
+            the document's own; with `base=` a folder, to that folder.
 
     Returns:
         Findings in source order. Empty means the document is valid.
@@ -1875,6 +1879,22 @@ def diagnose_source(
         >>> found[0].rule
         'panel-geometry'
     """
+    try:
+        with reading_within(root=root, base=base, source=source):
+            return _diagnose_source(text, source=source, base=base, library=library, deep=deep)
+    except MarkerError as exc:
+        return [_marker_finding(exc)]
+
+
+def _diagnose_source(
+    text: str,
+    *,
+    source: Path | None = None,
+    base: Folder | None = None,
+    library: PuppetLibrary | None = None,
+    deep: bool = False,
+) -> list[Diagnostic]:
+    """The body of :func:`diagnose_source`, inside its root."""
     written, refused = _read_mapping(text, source)
     if written is None:
         return refused
@@ -1946,6 +1966,7 @@ def diagnose_script(
     base: Folder | None = None,
     library: PuppetLibrary | None = None,
     deep: bool = False,
+    root: Path | None = None,
 ) -> list[Diagnostic]:
     """Check a comic script.
 
@@ -1970,10 +1991,29 @@ def diagnose_script(
             against. Defaults to the two shipped puppets.
         deep: Also run the full compiler on any panel that passes every cheap check.
             See `diagnose_source`.
+        root: The folder every file the document names must be inside. Defaults to the
+            nearest folder at or above the document's that holds a `scenet.toml`, else
+            the document's own; with `base=` a folder, to that folder.
 
     Returns:
         Findings in source order, empty if the script is valid.
     """
+    try:
+        with reading_within(root=root, base=base, source=source):
+            return _diagnose_script(text, source=source, base=base, library=library, deep=deep)
+    except MarkerError as exc:
+        return [_marker_finding(exc)]
+
+
+def _diagnose_script(
+    text: str,
+    *,
+    source: Path | None = None,
+    base: Folder | None = None,
+    library: PuppetLibrary | None = None,
+    deep: bool = False,
+) -> list[Diagnostic]:
+    """The body of :func:`diagnose_script`, inside its root."""
     lines = normalise_text(text).split("\n")
     try:
         document = parse_script_document(text, source=source)
@@ -2301,7 +2341,11 @@ def _diagnose_script_cast(
 
 
 def diagnose_file(
-    path: Path, *, library: PuppetLibrary | None = None, deep: bool = False
+    path: Path,
+    *,
+    library: PuppetLibrary | None = None,
+    deep: bool = False,
+    root: Path | None = None,
 ) -> list[Diagnostic]:
     """Check a document on disk, choosing the frontend by extension.
 
@@ -2311,16 +2355,21 @@ def diagnose_file(
             against. Defaults to the two shipped puppets.
         deep: Also run the full compiler on any panel that passes every cheap check.
             See `diagnose_source`.
+        root: The folder every file the document names must be inside, and the document
+            too. Defaults to the nearest folder at or above the document's that holds a
+            `scenet.toml`, else the document's own.
 
     Returns:
         Findings in source order, empty if the document is valid.
 
     Raises:
-        OSError: The file cannot be read. Not reported as a finding, because a file that
-            cannot be opened is a problem with the invocation rather than with a panel.
-            Bytes that are not UTF-8 are a `syntax` finding: that is the document's fault.
+        OSError: The file cannot be read, or is not a regular file, or is larger than
+            :data:`DOCUMENT_BYTES <scenet.limits.DOCUMENT_BYTES>`. Not reported as a
+            finding, because a file that cannot be opened is a problem with the invocation
+            rather than with a panel. Bytes that are not UTF-8 are a `syntax` finding: that
+            is the document's fault.
     """
-    data = path.read_bytes()
+    data = read_bounded(path, limits.DOCUMENT_BYTES, what="a document")
     try:
         text = data.decode()
     except UnicodeDecodeError as exc:
@@ -2330,8 +2379,19 @@ def diagnose_file(
         )
         return [Diagnostic(rule="syntax", message=message, source=path)]
     if path.suffix.lower() == ".script":
-        return diagnose_script(text, source=path, library=library, deep=deep)
-    return diagnose_source(text, source=path, library=library, deep=deep)
+        return diagnose_script(text, source=path, library=library, deep=deep, root=root)
+    return diagnose_source(text, source=path, library=library, deep=deep, root=root)
+
+
+def _marker_finding(exc: MarkerError) -> Diagnostic:
+    """A `scenet.toml` that holds something, located in it."""
+    line = Position(line=exc.line, column=1)
+    return Diagnostic(
+        rule=exc.kind,
+        message=exc.reason,
+        source=exc.marker,
+        region=Region(start=line, end=Position(line=exc.line + 1, column=1)),
+    )
 
 
 def to_sarif(found: list[Diagnostic], *, root: Path | None = None) -> dict[str, Any]:
