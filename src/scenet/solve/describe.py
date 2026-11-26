@@ -25,7 +25,7 @@ This sees no artwork. Where a figure is comes in as one number, its face's x, th
 rounded value Panel Core records.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 
 from scenet.emphasis import plain
 from scenet.ir import (
@@ -206,12 +206,13 @@ def _who(event: SayEvent) -> str:
     return ", ".join(parts)
 
 
-def label(event: ScriptEvent) -> str:
+def label(event: ScriptEvent, *, drawn: Collection[str] = ()) -> str:
     """One script entry as it is read: who, how, and the words.
 
     The words are the author's, with emphasis markers off -- never the lettered lines,
     which are broken to fit and, for a spoken caption, carry quotation marks that are
-    lettering rather than speech.
+    lettering rather than speech. A spoken caption names its speaker as a caption when
+    that speaker is drawn; otherwise it says the voice is off panel.
 
     Example:
         >>> from scenet import SayEvent
@@ -222,20 +223,26 @@ def label(event: ScriptEvent) -> str:
     if isinstance(event, SayEvent):
         return f"{_who(event)}: {sentence(plain(event.text))}"
     if isinstance(event, CaptionEvent):
-        who = (
-            f"{name(event.by)}, off panel"
-            if event.kind is CaptionKind.SPOKEN and event.by is not None
-            else _CAPTIONS[event.kind]
-        )
+        if event.kind is CaptionKind.SPOKEN and event.by is not None:
+            who = (
+                f"{name(event.by)}, caption"
+                if event.by in drawn
+                else f"{name(event.by)}, off panel"
+            )
+        else:
+            who = _CAPTIONS[event.kind]
         return f"{who}: {sentence(plain(event.text))}"
     # A sound effect's underscore is a letter, not emphasis.
     source = f", from {name(event.source)}" if event.source is not None else ""
     return f"Sound effect{source}: {sentence(event.text)}"
 
 
-def labels(script: Sequence[ScriptEvent]) -> tuple[str, ...]:
-    """Every entry's label, in script order, which is reading order."""
-    return tuple(label(event) for event in script)
+def labels(script: Sequence[ScriptEvent], *, drawn: Collection[str] = ()) -> tuple[str, ...]:
+    """Every entry's label, in script order, which is reading order.
+
+    drawn is the set of cast ids represented by actors or figures in this panel.
+    """
+    return tuple(label(event, drawn=drawn) for event in script)
 
 
 def _shot(panel: PanelIR) -> str:

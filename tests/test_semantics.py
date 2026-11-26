@@ -61,6 +61,15 @@ class TestWhatTheCompilerAlreadySaid:
         assert "prompt" not in text
 
 
+class TestSpokenCaption:
+    def test_a_drawn_speaker_is_labelled_as_a_caption(self):
+        core = compile_source(
+            "cast: {maya: {reference: alice}}\n"
+            "script: [{caption: {text: Hello., kind: spoken, by: maya}}]\n"
+        ).core
+        assert _semantics(core)["lettering"][0]["label"] == "Maya, caption: Hello."
+
+
 class TestTheCamera:
     def test_the_shot_and_angle_asked_for_and_how_far_it_retreated(self):
         assert _semantics(_street())["camera"] == {

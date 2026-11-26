@@ -113,6 +113,8 @@ it is written, and says what to write instead.
 
 ### Fixed
 
+- **A spoken caption by a character who is drawn is read as a caption** (#452): its label is `Maya, caption: …`, no longer `Maya, off panel: …`, in the SVG title, Panel Core and the semantics export. A voice whose speaker is not drawn is still off panel.
+
 - **A comic-script panel drawn `@over:` another is no longer blamed on the front matter**
   (#357): when panel 1 overrode a front-matter actor with `@cast:` and panel 2 was `@over: 1`,
   `scenet check` reported panel 2's inherited fault at the front matter, whose value was sound.
