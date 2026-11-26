@@ -1,20 +1,24 @@
 # Security Policy
 
-## Supported versions
+What Scenet guarantees with input from someone you do not trust, and what you must add, is
+the [security model](https://creatoan.github.io/scenet/explanation/security_model.html): each
+guarantee there names the test that holds it.
 
-This project is alpha. Fixes go into a patch release of the latest minor version: 0.11.1
-was a security release of 0.11. `main` gets every fix first.
+## Status
 
-| Version | Supported |
-|---|---|
-| 0.13.x | Yes |
-| Older | No: upgrade to the latest release |
+This project is alpha, as its package says, and is provided as is, with no warranty. No
+version is supported: none is maintained, and no security fix is promised for any of them.
 
 ## Reporting a vulnerability
 
 Please report privately through GitHub's
 [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
-on this repository, rather than opening a public issue.
+on this repository, rather than opening a public issue. A document, a file or a command that
+shows the fault is the most useful thing a report can hold.
+
+Scenet makes no commitment about security: not to answer a report, by any date or at all,
+not to fix what one shows, and not to publish a release that does. A report is read when its
+maintainers can, and what comes of it is up to them.
 
 ## Scope
 
