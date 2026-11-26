@@ -475,7 +475,7 @@ like everything else, so the emitter copies them and decides nothing:
   at the centre of its face, with its pose, expression and marks, whom it looks at, and whom it
   stands in front of or behind. A panel with nothing in it is `An empty panel.`
 - **`label`**, on every balloon, caption and sound effect, is who says it, how, and the words:
-  `Bob, whispering, quietly: I know.`, `Caption, inner voice: …`, `Carol, off panel: …`. The words
+  `Bob, whispering, quietly: I know.`, `Caption, inner voice: …`, `Carol, off panel: …`, `Maya, caption: …`. The words
   are the author's with emphasis markers off — never `lines`, which are broken to fit and, on a
   spoken caption, carry quotation marks that are lettering, not speech. Each is a sentence: a line
   that does not end gets a full stop, so two lines are heard as two.

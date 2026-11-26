@@ -830,7 +830,7 @@ def _compile_ir(
         for figure in picture.figures
         if figure.name in playing
     )
-    said = labels(script)
+    said = labels(script, drawn=where)
     looked_at = panel.gaze_targets()
     core = PanelCore(
         width=width,

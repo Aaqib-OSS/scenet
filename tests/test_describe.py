@@ -258,8 +258,13 @@ class TestGenerated:
 
 
 class TestLabels:
-    def _labels(self, script: str, cast: str = "cast: {alice: {reference: alice}}\n") -> list[str]:
-        return list(labels(parse_panel(f"{cast}script:\n{script}").script))
+    def _labels(
+        self,
+        script: str,
+        cast: str = "cast: {alice: {reference: alice}}\n",
+        drawn: tuple[str, ...] = (),
+    ) -> list[str]:
+        return list(labels(parse_panel(f"{cast}script:\n{script}").script, drawn=drawn))
 
     def test_one_per_entry_in_reading_order(self):
         said = self._labels(
@@ -308,6 +313,22 @@ class TestLabels:
     )
     def test_captions(self, caption: str, said: str):
         assert self._labels(f"  - caption: {caption}\n") == [said]
+
+    def test_a_spoken_caption_by_a_drawn_character_is_labelled_as_a_caption(self):
+        said = self._labels(
+            "  - caption: {text: Hello., kind: spoken, by: maya}\n",
+            cast="cast: {maya: {reference: alice}}\n",
+            drawn=("maya",),
+        )
+        assert said == ["Maya, caption: Hello."]
+
+    def test_a_spoken_caption_by_an_undrawn_character_is_labelled_off_panel(self):
+        said = self._labels(
+            "  - caption: {text: Hello., kind: spoken, by: carol}\n",
+            cast="cast: {maya: {reference: alice}}\n",
+            drawn=("maya",),
+        )
+        assert said == ["Carol, off panel: Hello."]
 
     def test_a_spoken_captions_quotation_marks_are_not_read(self):
         """The marks are lettering, added to the drawn lines, not to what is said."""

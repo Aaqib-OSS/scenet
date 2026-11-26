@@ -19,7 +19,7 @@ from xml.etree import ElementTree
 
 import pytest
 
-from scenet import compile_book, compile_source
+from scenet import compile_book, compile_script, compile_source
 from scenet.cli import main
 from scenet.core import PanelCore
 from scenet.emit.debug_svg import render_debug
@@ -131,6 +131,24 @@ class TestAPanel:
         source = SILENT + 'script: [{say: {by: alice, text: "a < b & \\"c\\" > d"}}]\n'
         root = _root(render(compile_source(source).core))
         assert accessible_name(root).endswith('Alice: a < b & "c" > d.')
+
+
+class TestSpokenCaption:
+    def test_a_drawn_speaker_is_not_labelled_off_panel_in_the_svg_title(self):
+        book = compile_script(
+            '---\ncast: {MAYA: {reference: alice}}\n---\nPANEL 1\nCAP/MAYA: "Hello."\n'
+        )
+        core = book.panels["1"].core
+        assert core.captions[0].label == "MAYA, caption: Hello."
+        assert accessible_name(_root(render(core))).endswith("MAYA, caption: Hello.")
+
+    def test_a_speaker_who_is_not_drawn_remains_off_panel(self):
+        book = compile_script(
+            '---\ncast: {MAYA: {reference: alice}}\n---\nPANEL 1\nCAP/CAROL: "Hello."\n'
+        )
+        core = book.panels["1"].core
+        assert core.captions[0].label == "CAROL, off panel: Hello."
+        assert accessible_name(_root(render(core))).endswith("CAROL, off panel: Hello.")
 
 
 class TestInlinedTogether:

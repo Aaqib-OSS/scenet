@@ -24,6 +24,11 @@ A panel is one image, `role="img"`, named by one `<title>`, its first child:
   saying who and how — `Bob, whispering: I know.` — in the one order
   [Panel Core](../reference/panel_core.md#the-words) keeps. A sound effect is in its place in that
   order, though it is painted under every balloon.
+
+  A spoken caption names its speaker as a caption when that character is drawn in the panel:
+  `Maya, caption: Hello.` When the speaker is not drawn, the label says so:
+  `Maya, off panel: Hello.` The SVG title, the playground's **Screen reader** tab and the
+  semantics export use this same label.
 - **All of it is the name, and nothing else.** A screen reader always reads an image's name, and
   often does not read its description, so the words are not left to a description. Nor is
   anything given as one as well: named through `aria-labelledby` by a `<title>` and a `<desc>`,
