@@ -487,6 +487,41 @@ class FontMetrics:
         table: Any = self._font["hhea"]
         return table.ascent / self._units_per_em, -table.descent / self._units_per_em
 
+    def probe(self) -> None:
+        """Read now what is otherwise read on first use: its kerning and its outlines.
+
+        fontTools reads a table, and a glyph, when it is first asked for, so a file that
+        opens can still fail half way through a compile -- or a render, long after its
+        check was clean. An author's face is probed when it is read, so that a file that is
+        not a font is the `font-file` finding at the face it names, and the shipped faces
+        are not paid for. What the probe does not reach is refused when it is, as
+        :exc:`MalformedAssetError <scenet.errors.MalformedAssetError>`.
+
+        Raises:
+            MalformedAssetError: A table or a glyph cannot be read.
+        """
+        self._lookups()
+        self.glyph_outlines(_PROBED)
+
+    def _lookups(self) -> list[tuple["_PairTable", ...]]:
+        """The kerning lookups, read on first use: GPOS, or else a legacy `kern` table.
+
+        Indexed once into tables of this module's own, which answer without reading the
+        font again; reading them is what can fail.
+        """
+        if self._kerning is None:
+            try:
+                self._kerning = _gpos_kerning(self._font) or _legacy_kerning(self._font)
+            except Exception as exc:
+                raise self._unreadable("kerning") from exc
+        return self._kerning
+
+    def _unreadable(self, part: str) -> MalformedAssetError:
+        return MalformedAssetError(
+            f"not a TrueType or OpenType font that can be drawn: its {part} cannot be read",
+            source=Path(self.path),
+        )
+
     @staticmethod
     def digest(data: bytes) -> str:
         """What a font file is known by: the SHA-256 of its bytes, in hex."""
@@ -511,10 +546,8 @@ class FontMetrics:
         known = self._kerned.get((left, right))
         if known is not None:
             return known
-        if self._kerning is None:
-            self._kerning = _gpos_kerning(self._font) or _legacy_kerning(self._font)
         total = 0
-        for lookup in self._kerning:
+        for lookup in self._lookups():
             for subtable in lookup:
                 value = subtable.adjust(left, right)
                 if value is not None:
@@ -615,17 +648,20 @@ class FontMetrics:
         cost is that the text is no longer selectable, which is why `--live-text`
         exists -- in the print PDF with the face embedded, so exactly.
         """
-        glyph_set = self._font.getGlyphSet()
         outlines: list[tuple[str, float]] = []
         last = len(text) - 1
         for index, character in enumerate(text):
             step = self.step(character, text[index + 1] if index < last else None)
-            name = self._cmap.get(ord(character))
-            if name is None or name not in glyph_set:
-                outlines.append(("", step))
-                continue
-            pen = SVGPathPen(glyph_set)
-            glyph_set[name].draw(pen)
+            try:
+                glyph_set = self._font.getGlyphSet()
+                name = self._cmap.get(ord(character))
+                if name is None or name not in glyph_set:
+                    outlines.append(("", step))
+                    continue
+                pen = SVGPathPen(glyph_set)
+                glyph_set[name].draw(pen)
+            except Exception as exc:
+                raise self._unreadable("outlines") from exc
             outlines.append((pen.getCommands(), step))
         return outlines
 
@@ -654,15 +690,25 @@ class FontMetrics:
         cached = self._pdf_paths.get(character)
         if cached is not None:
             return cached
-        glyph_set = self._font.getGlyphSet()
         name = self._cmap.get(ord(character))
         path = ""
-        if name is not None and name in glyph_set:
-            pen = _PdfPen(glyph_set)
-            glyph_set[name].draw(pen)
-            path = " ".join(pen.parts)
+        try:
+            glyph_set = self._font.getGlyphSet()
+            if name is not None and name in glyph_set:
+                pen = _PdfPen(glyph_set)
+                glyph_set[name].draw(pen)
+                path = " ".join(pen.parts)
+        except Exception as exc:
+            raise self._unreadable("outlines") from exc
         self._pdf_paths[character] = path
         return path
+
+
+#: What :meth:`FontMetrics.probe` draws: the letters, figures and marks of most lettering.
+_PROBED = (
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    ".,;:!?'\"-()&*/ \u2014\u2026\u2019"
+)
 
 
 class _PdfPen(BasePen):
