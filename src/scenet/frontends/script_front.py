@@ -80,6 +80,7 @@ from scenet.ir import (
     BalloonKind,
     CameraAngle,
     CaptionKind,
+    CastMember,
     Direction,
     PageLayout,
     PanelIR,
@@ -1879,6 +1880,36 @@ def _front_matter_region(text: str, offset: int, path: tuple[str | int, ...]) ->
     return locate(block, path) or DOCUMENT_START
 
 
+def _check_front_matter_cast(cast: object, text: str, offset: int, source: Path | None) -> None:
+    """Each member of the front matter's cast, checked once, where it is written.
+
+    A panel draws only some of them, so a member no panel draws is checked by no
+    panel: `at: nowhere` on one would otherwise build without a word.
+
+    Raises:
+        ScriptSyntaxError: The member's first fault, at its line in the front matter.
+    """
+    if not isinstance(cast, dict):
+        return
+    for actor, member in cast.items():
+        if not isinstance(member, dict):
+            continue
+        try:
+            CastMember.model_validate(member)
+        except ValidationError as exc:
+            rule, loc = rule_for_pydantic(errors_of(exc)[0])
+            message = str(errors_of(exc)[0]["msg"]).removeprefix("Value error, ")
+            where = ".".join(str(step) for step in ("cast", actor, *loc))
+            raise _front_matter_fault(
+                f"in the front matter, at {where}: {message}",
+                text,
+                offset,
+                ("cast", actor, *loc),
+                rule=rule,
+                source=source,
+            ) from exc
+
+
 def _front_matter_fault(
     message: str,
     text: str,
@@ -2024,6 +2055,8 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
     page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")
     unusable = _unusable_name(cast)
+    if unusable is None:
+        _check_front_matter_cast(cast, text, offset, source)
     if unusable is not None:
         name, problem = unusable
         # At the key, quoted or not, flow style or block.
@@ -2180,6 +2213,74 @@ def _off_panel(
     return document
 
 
+def _drawn(panels: dict[str, _PanelDraft]) -> dict[str, frozenset[str]]:
+    """Who of the front matter's cast each panel draws.
+
+    Who speaks in it, from off panel too -- `_off_panel` then takes them out of the picture,
+    on the side they were written to stand -- who a sound comes from, whom its own `@cast:`
+    or `@staging:` names, and whomever the panel it is drawn `@over:` draws. Nobody else: a panel of
+    description, captions or sounds only is cast-less, an establishing shot or an insert,
+    and a silent panel draws whom its `@cast:` names.
+    """
+    found: dict[str, frozenset[str]] = {}
+
+    def of(name: str) -> frozenset[str]:
+        if name in found:
+            return found[name]
+        draft = panels[name]
+        named = {
+            str(value)
+            for event in draft.events
+            for verb, key in (("say", "by"), ("sfx", "from"))
+            if isinstance(inner := event.get(verb), dict) and (value := inner.get(key)) is not None
+        }
+        own = draft.settings.get("cast")
+        if isinstance(own, dict):
+            named |= set(own)
+        staged = draft.settings.get("staging")
+        for relation in staged if isinstance(staged, list) else ():
+            words = relation.split() if isinstance(relation, str) else []
+            if isinstance(relation, dict):
+                words = [str(relation.get("subject")), str(relation.get("object"))]
+            named |= set(words[:1] + words[-1:])
+        target = draft.settings.get(OVER_KEY)
+        if isinstance(target, str):
+            # `_composed` has refused an `@over:` that names no panel, its own, or a loop.
+            named |= of(_over_target(target, name, draft, panels))
+        found[name] = frozenset(named)
+        return found[name]
+
+    for name in panels:
+        of(name)
+    return found
+
+
+def _keeping(front_matter: dict[str, Any], drawn: frozenset[str]) -> dict[str, Any]:
+    """The front matter as one panel inherits it: its cast, only whom the panel draws.
+
+    A staging relation that names a member the panel does not draw goes with them, without
+    a note: nobody left them out, they were never in it. A figure stays: the panel's picture
+    draws whom it draws, whoever speaks, and a figure it does not draw is left out there.
+    """
+    cast = front_matter.get("cast")
+    if not isinstance(cast, dict):
+        return front_matter
+    absent = [
+        actor
+        for actor, member in cast.items()
+        if actor not in drawn and not (isinstance(member, dict) and member.get("figure"))
+    ]
+    if not absent:
+        return front_matter
+    kept = {**front_matter, "cast": {actor: cast[actor] for actor in cast if actor in drawn}}
+    staging = front_matter.get("staging")
+    if isinstance(staging, list):
+        kept["staging"] = [
+            relation for relation in staging if not any(names(relation, a) for a in absent)
+        ]
+    return kept
+
+
 def _over_target(target: str, name: str, draft: _PanelDraft, names: Collection[str]) -> str:
     """The panel an `@over:` names, by the name the script gave it.
 
@@ -2243,10 +2344,13 @@ def _validate(
     scene's defaults are merged under each of its panels.
     """
     composed, standing = _composed(panels, source)
+    drawn = _drawn(panels)
     result: dict[str, PanelIR] = {}
     for name, draft in panels.items():
+        # The front matter's cast is who may be drawn; a panel draws only some of them.
+        beneath = _keeping(front_matter, drawn[name])
         settled, dropped = settle(
-            merge(front_matter, composed[name]), beneath=merge(front_matter, standing[name])
+            merge(beneath, composed[name]), beneath=merge(beneath, standing[name])
         )
         line = draft.directive_lines.get(("cast",)) or draft.directive_lines.get((OVER_KEY,))
         line = line or draft.line

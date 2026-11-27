@@ -40,6 +40,11 @@ it is written, and says what to write instead.
   `scenet.mcp.build_server(timeout=...)` bounds the calls of a server a host runs itself, and
   returns a `scenet.mcp.Server`, whose `close()` stops its workers.
 
+- **A panel may have no cast** (#364): an establishing shot, an insert. `cast` left out or
+  empty compiled to "panel has no cast; there is nothing to place", with no file or line; now
+  the setting is drawn, captions, sounds and lines from off panel are lettered, Panel Core
+  records no camera, and the description says what is shown, `Long shot. A street at night, in
+  the rain.` The gallery's new "A panel with nobody in it" shows one.
 - **JSON is a second carrier for every document** (#354). A panel, a scene, a puppet file or an
   artwork contract may be written in JSON, Scenet JSON, the same data model as Scenet YAML: a
   file that ends in `.json` (`*.panel.json`, `*.scene.json`, `*.puppet.json`, `*.art.json`), or
@@ -119,6 +124,14 @@ it is written, and says what to write instead.
   in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
   usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
 
+- **A comic script panel draws who is in it, not the whole cast** (#364). The front matter's
+  cast is everybody the scene may draw; a panel draws whoever speaks in it or makes a sound in
+  it, whomever its own `@cast:` or `@staging:` names, and whomever the panel it is drawn
+  `@over:` draws. A silent "Maya runs" panel drew Theo, and an exterior establishing shot drew
+  everybody; now a panel of description, captions or sounds only has no cast. To draw somebody
+  silent, write `@cast: {THEO: {}}` in that panel. A staging relation of the front matter that
+  names somebody a panel does not draw does not apply there. A figure a supplied picture draws
+  is still drawn by it.
 - **The vocabulary is reviewed for 1.0** (#361). Every key written in more than one place was
   read against the others, and the review is a table in "All keys, A to Z". Three spellings
   moved, and each old one is one finding, where it is written, that says what to write instead:
@@ -232,6 +245,11 @@ it is written, and says what to write instead.
 - **`scenet check` on a file that is not UTF-8 is a `syntax` finding** (#377), the one line
   `scenet build` already printed for it, rather than a traceback. A source that vanishes while
   `build` reads it names the file in one line, as a missing file does.
+
+- **A cycle in depth order is found by `scenet check`** (#364): `a in_front_of b, b in_front_of
+  a` passed the check and failed only in the solver, as `layout`; it is now `ordering-cycle`, at
+  the relation that closes the cycle, as one left to right always was. No document is known to
+  give `layout` any more, and its entry says so.
 - **A comic-script panel drawn `@over:` another is no longer blamed on the front matter**
   (#357): when panel 1 overrode a front-matter actor with `@cast:` and panel 2 was `@over: 1`,
   `scenet check` reported panel 2's inherited fault at the front matter, whose value was sound.
