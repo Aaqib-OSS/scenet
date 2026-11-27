@@ -55,6 +55,7 @@ from scenet.compose import (
     OVER_KEY,
     SCRIPT_KEY,
     looks_toward,
+    lowered,
     merge,
     names,
     on_their_side,
@@ -1666,6 +1667,8 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             source=source,
             line=number,
         ) from exc
+    if key == "cast":
+        draft.settings[key] = _directive_cast(draft.settings[key], number, source)
     unusable = _unusable_name(draft.settings[key]) if key == "cast" else None
     if unusable is not None:
         raise ScriptSyntaxError(
@@ -1675,6 +1678,23 @@ def _apply_directive(line: str, draft: _PanelDraft, number: int, source: Path | 
             rule="invalid-identifier",
         )
     return True
+
+
+def _directive_cast(cast: object, number: int, source: Path | None) -> object:
+    """An `@cast:` directive's value, its list form as the mapping form it stands for.
+
+    Raises:
+        ScriptSyntaxError: An item of the list at fault, at the directive's line.
+    """
+    found = lowered({"cast": cast})
+    if found.faults:
+        raise ScriptSyntaxError(
+            f"line {number}: in directive '@cast', {found.faults[0].message}",
+            source=source,
+            line=number,
+            rule=found.faults[0].rule,
+        )
+    return found.document["cast"]
 
 
 def _camera_word(key: str, value: str, number: int, source: Path | None, panel: str) -> str:
@@ -1993,6 +2013,14 @@ def parse_script_document(text: str, *, source: Path | None = None) -> ScriptDoc
             NOT_A_DEFAULT, text, offset, (DESCRIPTION_KEY,), rule="unknown-key", source=source
         )
     _check_direction(front_matter.get(DIRECTION_KEY), text, offset, source)
+    # The list form of the cast, as the mapping form it stands for (#356).
+    found = lowered(front_matter)
+    if found.faults:
+        first = found.faults[0]
+        raise _front_matter_fault(
+            first.message, text, offset, first.loc, rule=first.rule, source=source
+        )
+    front_matter = found.document
     page_format = front_matter.pop("page", None)
     cast = front_matter.get("cast")
     unusable = _unusable_name(cast)

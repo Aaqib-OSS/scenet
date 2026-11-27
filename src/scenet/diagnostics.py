@@ -37,6 +37,7 @@ its identity when a comment is added above it, and an alert is not re-raised as 
 every unrelated edit.
 """
 
+import dataclasses
 import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -60,6 +61,8 @@ from scenet.compose import (
     DIRECTION_KEY,
     NOT_DEFAULTS,
     OVER_KEY,
+    PANELS_SHAPE,
+    lowered,
     merge,
     own_direction,
     relation_text,
@@ -210,9 +213,14 @@ RULES: dict[str, Rule] = {
             "a word, and the rest would compile. Keys are compared as written, so `1` and "
             "`1.0` are two keys, and `no` and `'no'` are one. In a comic script, the same "
             "goes for a directive written twice in one panel, and for an `@script:` "
-            "directive, which would replace the panel's cues."
+            "directive, which would replace the panel's cues. In the list form of `panels` "
+            "or `cast`, two items that give themselves one `name` or one `id` are the same "
+            "key written twice."
         ),
-        help="Delete or rename one of the two; the message says which lines they are on.",
+        help=(
+            "Delete or rename one of the two; the message says which lines, or which items, "
+            "they are."
+        ),
     ),
     "yaml-tag": Rule(
         summary="A YAML tag is written",
@@ -1636,7 +1644,7 @@ def _diagnose_scene(
         return [
             Diagnostic(
                 rule="invalid-field",
-                message="'panels' must be a mapping of name to panel",
+                message=PANELS_SHAPE,
                 path=("panels",),
                 source=source,
                 region=locate(text, ("panels",)) or DOCUMENT_START,
@@ -1903,6 +1911,46 @@ def _diagnose_source(
     later = language_fault(head)
     if later is not None:
         return [_broken(later, text, source)]
+    # The keyed collections, lowered to the mapping form the rest reads, before anything is
+    # merged; each item at fault is one finding, and is left out of what is checked.
+    lowering = lowered(data)
+    forms = [
+        Diagnostic(
+            rule=fault.rule,
+            message=fault.message,
+            path=fault.loc,
+            source=source,
+            region=locate(text, fault.loc) or DOCUMENT_START,
+        )
+        for fault in lowering.faults
+    ]
+    checked = _diagnose_lowered(
+        head, lowering.document, text, source, base=base, library=library, deep=deep
+    )
+    # Each finding at the value as the document writes it: `cast[2].at` in a list form. A
+    # finding in another file -- an artwork contract -- has a path of its own.
+    return _in_source_order(
+        forms
+        + [
+            dataclasses.replace(item, path=lowering.where(item.path))
+            if item.source == source
+            else item
+            for item in checked
+        ]
+    )
+
+
+def _diagnose_lowered(
+    head: dict[str, Any],
+    data: dict[str, Any],
+    text: str,
+    source: Path | None,
+    *,
+    base: Folder | None,
+    library: PuppetLibrary | None,
+    deep: bool,
+) -> list[Diagnostic]:
+    """`diagnose_source`, once the document's keyed collections are lowered."""
     base = _folder(source, base)
     # Once per document, not once per panel: every panel resolves its cast against it.
     library = library or default_library()
@@ -1912,9 +1960,8 @@ def _diagnose_source(
     # every valid scene file in the repository. The frontend has always made this
     # distinction; the checker has to make it too.
     if "panels" in data:
-        return _in_source_order(
-            _diagnose_head(head, text, source, shape=Kind.SCENE)
-            + _diagnose_scene(data, text, source, library=library, deep=deep, base=base)
+        return _diagnose_head(head, text, source, shape=Kind.SCENE) + _diagnose_scene(
+            data, text, source, library=library, deep=deep, base=base
         )
     found = _diagnose_head(head, text, source, shape=Kind.PANEL)
 
@@ -1937,9 +1984,8 @@ def _diagnose_source(
             ),
         ]
 
-    return _in_source_order(
-        found
-        + _diagnose_panel(data, text, source, prefix=(), library=library, deep=deep, base=base)
+    return found + _diagnose_panel(
+        data, text, source, prefix=(), library=library, deep=deep, base=base
     )
 
 
@@ -2124,9 +2170,10 @@ def _script_front_matter(text: str) -> tuple[str, dict[str, Any]]:
     if not match:
         return "", {}
     padded = "\n" * normalised.count("\n", 0, match.start(1)) + match.group(1) + "\n"
-    # parse_script has already loaded this successfully, so it cannot fail here.
+    # parse_script has already loaded this successfully, so it cannot fail here; nor can
+    # lowering its cast, which it lowered too.
     loaded = load(padded)
-    return padded, stripped(loaded) if isinstance(loaded, dict) else {}
+    return padded, lowered(stripped(loaded)).document if isinstance(loaded, dict) else {}
 
 
 def _written_through(document: ScriptDocument, name: str) -> dict[str, Any]:

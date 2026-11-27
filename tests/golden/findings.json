@@ -225,20 +225,20 @@
   ],
   "examples/gallery/56-a-relation-left-out.scene.yaml": [
     {
-      "fingerprint": "fe7546e30ac4aed91139dc067b6eac93",
+      "fingerprint": "b8e31da97d70fd3427b7a4280fde8f82",
       "level": "note",
       "message": "'alice left_of bob' does not apply in this panel, which leaves bob out of it",
       "path": [
         "panels",
-        "alone",
+        1,
         "cast",
-        "bob"
+        0
       ],
       "region": [
-        33,
-        12,
-        33,
-        16
+        36,
+        9,
+        36,
+        32
       ],
       "rule": "dropped-relation",
       "source": "examples/gallery/56-a-relation-left-out.scene.yaml"
@@ -246,20 +246,20 @@
   ],
   "examples/gallery/56-a-relation-left-out.scene.yaml --deep": [
     {
-      "fingerprint": "fe7546e30ac4aed91139dc067b6eac93",
+      "fingerprint": "b8e31da97d70fd3427b7a4280fde8f82",
       "level": "note",
       "message": "'alice left_of bob' does not apply in this panel, which leaves bob out of it",
       "path": [
         "panels",
-        "alone",
+        1,
         "cast",
-        "bob"
+        0
       ],
       "region": [
-        33,
-        12,
-        33,
-        16
+        36,
+        9,
+        36,
+        32
       ],
       "rule": "dropped-relation",
       "source": "examples/gallery/56-a-relation-left-out.scene.yaml"
@@ -511,6 +511,44 @@
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/a-caption-between-a-page-and-its-panel.script"
+    }
+  ],
+  "tests/finding_corpus/a-cast-of-both-forms.panel.yaml": [
+    {
+      "fingerprint": "187e5e87b556c85809b1ff072d7ce632",
+      "level": "error",
+      "message": "this item is written as the mapping form writes a cast member, `bob:` and what it says: in the list form, write `{id: bob, reference: ..., at: ...}`, or write the whole `cast` as a mapping",
+      "path": [
+        "cast",
+        1
+      ],
+      "region": [
+        5,
+        5,
+        6,
+        1
+      ],
+      "rule": "missing-field",
+      "source": "tests/finding_corpus/a-cast-of-both-forms.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-cast-of-both-forms.panel.yaml --deep": [
+    {
+      "fingerprint": "187e5e87b556c85809b1ff072d7ce632",
+      "level": "error",
+      "message": "this item is written as the mapping form writes a cast member, `bob:` and what it says: in the list form, write `{id: bob, reference: ..., at: ...}`, or write the whole `cast` as a mapping",
+      "path": [
+        "cast",
+        1
+      ],
+      "region": [
+        5,
+        5,
+        6,
+        1
+      ],
+      "rule": "missing-field",
+      "source": "tests/finding_corpus/a-cast-of-both-forms.panel.yaml"
     }
   ],
   "tests/finding_corpus/a-column-that-is-a-number.scene.yaml": [
@@ -1949,6 +1987,46 @@
       "source": "tests/finding_corpus/a-loose-cue-after-a-page-heading.script"
     }
   ],
+  "tests/finding_corpus/a-member-removed-and-posed.panel.yaml": [
+    {
+      "fingerprint": "5fe59821477f32fb003825bf6230379e",
+      "level": "error",
+      "message": "a member with `remove: true` is left out, so it says nothing else: delete `pose`, or `remove`",
+      "path": [
+        "cast",
+        1,
+        "remove"
+      ],
+      "region": [
+        4,
+        23,
+        4,
+        27
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-member-removed-and-posed.panel.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-member-removed-and-posed.panel.yaml --deep": [
+    {
+      "fingerprint": "5fe59821477f32fb003825bf6230379e",
+      "level": "error",
+      "message": "a member with `remove: true` is left out, so it says nothing else: delete `pose`, or `remove`",
+      "path": [
+        "cast",
+        1,
+        "remove"
+      ],
+      "region": [
+        4,
+        23,
+        4,
+        27
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/a-member-removed-and-posed.panel.yaml"
+    }
+  ],
   "tests/finding_corpus/a-missing-puppet-file-then-an-unknown-puppet.panel.yaml": [
     {
       "fingerprint": "5ae10b61c13d6b52ca6dd058788a8709",
@@ -2460,6 +2538,46 @@
       ],
       "rule": "balloon-placement",
       "source": "tests/finding_corpus/a-page-too-small-to-letter.scene.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-panel-listed-twice.scene.yaml": [
+    {
+      "fingerprint": "f62e2d77ca609d1285e201b58749461b",
+      "level": "error",
+      "message": "panel 'street' is item 0 and item 2 of `panels`; each panel is listed once, with everything it says",
+      "path": [
+        "panels",
+        2,
+        "id"
+      ],
+      "region": [
+        8,
+        9,
+        8,
+        15
+      ],
+      "rule": "duplicate-key",
+      "source": "tests/finding_corpus/a-panel-listed-twice.scene.yaml"
+    }
+  ],
+  "tests/finding_corpus/a-panel-listed-twice.scene.yaml --deep": [
+    {
+      "fingerprint": "f62e2d77ca609d1285e201b58749461b",
+      "level": "error",
+      "message": "panel 'street' is item 0 and item 2 of `panels`; each panel is listed once, with everything it says",
+      "path": [
+        "panels",
+        2,
+        "id"
+      ],
+      "region": [
+        8,
+        9,
+        8,
+        15
+      ],
+      "rule": "duplicate-key",
+      "source": "tests/finding_corpus/a-panel-listed-twice.scene.yaml"
     }
   ],
   "tests/finding_corpus/a-panel-of-no-height.panel.yaml": [
@@ -3373,6 +3491,38 @@
   ],
   "tests/finding_corpus/a-scene-with-its-own-files.scene.yaml": [],
   "tests/finding_corpus/a-scene-with-its-own-files.scene.yaml --deep": [],
+  "tests/finding_corpus/a-script-cast-listed-twice.script": [
+    {
+      "fingerprint": "3209778cf195928c86be22e766e91bad",
+      "level": "error",
+      "message": "line 4: cast member 'ALICE' is item 0 and item 1 of `cast`; each cast member is listed once, with everything it says",
+      "path": [],
+      "region": [
+        4,
+        10,
+        4,
+        15
+      ],
+      "rule": "duplicate-key",
+      "source": "tests/finding_corpus/a-script-cast-listed-twice.script"
+    }
+  ],
+  "tests/finding_corpus/a-script-cast-listed-twice.script --deep": [
+    {
+      "fingerprint": "3209778cf195928c86be22e766e91bad",
+      "level": "error",
+      "message": "line 4: cast member 'ALICE' is item 0 and item 1 of `cast`; each cast member is listed once, with everything it says",
+      "path": [],
+      "region": [
+        4,
+        10,
+        4,
+        15
+      ],
+      "rule": "duplicate-key",
+      "source": "tests/finding_corpus/a-script-cast-listed-twice.script"
+    }
+  ],
   "tests/finding_corpus/a-script-panel-with-no-room.script": [],
   "tests/finding_corpus/a-script-panel-with-no-room.script --deep": [
     {
@@ -5536,17 +5686,35 @@
   ],
   "tests/finding_corpus/panels-not-a-mapping.scene.yaml": [
     {
-      "fingerprint": "e0bb3a8928645ac9d82445ebf91784db",
+      "fingerprint": "e97517dd403a895f62f23ce37a581f03",
       "level": "error",
-      "message": "'panels' must be a mapping of name to panel",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
       "path": [
-        "panels"
+        "panels",
+        0
       ],
       "region": [
         3,
-        9,
+        10,
         3,
-        19
+        13
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/panels-not-a-mapping.scene.yaml"
+    },
+    {
+      "fingerprint": "dfc853d284789665c02fe75f1f01fa68",
+      "level": "error",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
+      "path": [
+        "panels",
+        1
+      ],
+      "region": [
+        3,
+        15,
+        3,
+        18
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/panels-not-a-mapping.scene.yaml"
@@ -5554,17 +5722,35 @@
   ],
   "tests/finding_corpus/panels-not-a-mapping.scene.yaml --deep": [
     {
-      "fingerprint": "e0bb3a8928645ac9d82445ebf91784db",
+      "fingerprint": "e97517dd403a895f62f23ce37a581f03",
       "level": "error",
-      "message": "'panels' must be a mapping of name to panel",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
       "path": [
-        "panels"
+        "panels",
+        0
       ],
       "region": [
         3,
-        9,
+        10,
         3,
-        19
+        13
+      ],
+      "rule": "invalid-field",
+      "source": "tests/finding_corpus/panels-not-a-mapping.scene.yaml"
+    },
+    {
+      "fingerprint": "dfc853d284789665c02fe75f1f01fa68",
+      "level": "error",
+      "message": "each panel in the list form is a mapping that says its `id`, not str",
+      "path": [
+        "panels",
+        1
+      ],
+      "region": [
+        3,
+        15,
+        3,
+        18
       ],
       "rule": "invalid-field",
       "source": "tests/finding_corpus/panels-not-a-mapping.scene.yaml"

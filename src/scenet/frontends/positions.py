@@ -65,31 +65,58 @@ def _mark_to_region(node: yaml.Node) -> Region:
     )
 
 
-def _descend(node: yaml.Node, step: str | int) -> yaml.Node | None:
+def _step(node: yaml.Node, step: str | int) -> tuple[yaml.Node, yaml.Node | None] | None:
     """Take one step into a composed node tree.
 
     Args:
-        node: The node to descend from.
-        step: A mapping key or a sequence index.
+        node: The node to step from.
+        step: A mapping key, a sequence index, or the name an item of a list form gives
+            itself.
 
     Returns:
-        The child node, or `None` if this node cannot be stepped into that way -- which
-        happens routinely, because a pydantic `loc` path may name a field of a value
-        that is not the shape the schema expected.
+        The child node and the node that names it -- its key, or the name the item gives
+        itself, and `None` for a sequence index. `None` if this node cannot be stepped into
+        that way, which happens routinely, because a pydantic `loc` path may name a field
+        of a value that is not the shape the schema expected.
     """
     if isinstance(node, yaml.MappingNode):
         for key, value in node.value:
             # Compare as text: YAML keys arrive as scalar nodes, and `1` written as a
             # key is the string "1" here whether the path step is an int or a str.
             if isinstance(key, yaml.ScalarNode) and key.value == str(step):
-                return value
+                return value, key
         return None
 
     if isinstance(node, yaml.SequenceNode) and isinstance(step, int):
         if 0 <= step < len(node.value):
-            return node.value[step]
+            return node.value[step], None
         return None
 
+    if isinstance(node, yaml.SequenceNode):
+        # A panel or an actor of a list form, `[{name: one, ...}]`, named as the mapping
+        # form names it once the list is lowered (`scenet.compose.lowered`).
+        return _named_item(node, step)
+
+    return None
+
+
+#: The key an item of a list form is named by: `scenet.compose.ID_KEY`.
+_NAMING_KEYS = ("id",)
+
+
+def _named_item(node: yaml.SequenceNode, step: str | int) -> tuple[yaml.Node, yaml.Node] | None:
+    """The item of a list form that names itself `step`, and the node of its name."""
+    for item in node.value:
+        if not isinstance(item, yaml.MappingNode):
+            continue
+        for key, value in item.value:
+            if (
+                isinstance(key, yaml.ScalarNode)
+                and key.value in _NAMING_KEYS
+                and isinstance(value, yaml.ScalarNode)
+                and value.value == str(step)
+            ):
+                return item, value
     return None
 
 
@@ -128,32 +155,26 @@ def locate(text: str, path: tuple[str | int, ...]) -> Region | None:
 
     deepest = node
     key: yaml.Node | None = None
+    above: yaml.Node | None = None
     for step in path:
         if step == KEY and key is not None:
             # The key itself rather than its value: an actor id or a panel name refused.
             return _mark_to_region(key)
-        child = _descend(deepest, step)
-        if child is None:
+        stepped = _step(deepest, step)
+        if stepped is None:
             break
-        key = _key_of(deepest, step)
+        child, key = stepped
+        # The name of an item is inside it, where the item already starts.
+        above = key if isinstance(deepest, yaml.MappingNode) else None
         deepest = child
 
     region = _mark_to_region(deepest)
     # A block written beneath its key starts on the line after it, at whichever field
     # happens to come first -- which names nothing about the fault. The key does.
     is_block = isinstance(deepest, yaml.CollectionNode) and not deepest.flow_style
-    if key is not None and is_block:
-        return Region(start=_mark_to_region(key).start, end=region.end)
+    if above is not None and is_block:
+        return Region(start=_mark_to_region(above).start, end=region.end)
     return region
-
-
-def _key_of(node: yaml.Node, step: str | int) -> yaml.Node | None:
-    """The key node `step` names in a mapping, or `None` for a sequence index."""
-    if isinstance(node, yaml.MappingNode):
-        for key, _ in node.value:
-            if isinstance(key, yaml.ScalarNode) and key.value == str(step):
-                return key
-    return None
 
 
 def syntax_error_region(exc: yaml.YAMLError) -> Region:
