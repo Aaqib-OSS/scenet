@@ -51,6 +51,7 @@ Compiles `SOURCE` to SVG. The frontend is chosen by extension:
 | Extension | Read as |
 |---|---|
 | `.panel.yaml`, `.scene.yaml`, `.yaml`, `.yml` | YAML — single panel or a `panels:` sequence |
+| `.panel.json`, `.scene.json`, `.json` | JSON — the same documents, [Scenet JSON](language/json.md) |
 | `.script` | Comic script |
 
 ### Options
@@ -652,6 +653,48 @@ The output is sorted and indented, so it is stable under version control.
 | 0 | The schema was written |
 | 1 | The file could not be written |
 | 2 | Usage error, or `-o` names a directory |
+| 70 | An internal error |
+| 130 | Stopped by Ctrl-C |
+
+## `scenet convert`
+
+*Since 0.14.*
+
+```
+scenet convert FILE --to {json,yaml} [--lists] [-o OUTPUT]
+```
+
+Writes a panel, a scene, a puppet file or an artwork contract in the language's other carrier:
+[Scenet JSON](language/json.md), which programs and models write, or
+[Scenet YAML](language/yaml_profile.md). The two hold one data model, so the document converted
+builds what it built. Keys stay in the order written, a number is written as it was (`1.50`, not
+`1.5`), and an extension key is kept; a comment is not, since JSON has none. The document is read,
+not checked: one that does not compile converts to one that does not compile, at the same place.
+A comic script has no JSON form.
+
+`--to {json,yaml}`
+: The carrier to write. *Since 0.14.*
+
+`--lists`
+: Write `panels` and every `cast` as [lists](language/scene.md#panels), each item with its `id`,
+  which no tool that sorts keys can reorder. *Since 0.14.*
+
+`-o`, `--output PATH`
+: Write to this file instead of stdout. It names a file, so a directory is refused.
+  *Since 0.14.*
+
+```bash
+scenet convert examples/gallery/12-sequence.scene.yaml --to json -o sequence.scene.json
+scenet convert sequence.scene.json --to yaml --lists
+```
+
+### Exit status
+
+| Code | Meaning |
+|---|---|
+| 0 | The document was written |
+| 1 | The file is not YAML or JSON, or not a mapping |
+| 2 | Usage error, a file that cannot be read, a comic script, or `-o` names a directory |
 | 70 | An internal error |
 | 130 | Stopped by Ctrl-C |
 
