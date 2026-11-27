@@ -395,7 +395,7 @@ Checked as `duplicate-key.panel.yaml`:
 # `camera` twice: YAML would keep the second and drop the first without a word.
 camera: {shot: close_up}
 cast: {alice: {reference: alice}}
-camera: {shot: wide}
+camera: {shot: long_shot}
 ```
 
 `scenet check duplicate-key.panel.yaml` says:
@@ -410,7 +410,7 @@ Fixed:
 :beside: examples/gallery
 
 # `camera` once, with the shot that was meant.
-camera: {shot: wide}
+camera: {shot: long_shot}
 cast: {alice: {reference: alice}}
 ```
 
@@ -680,7 +680,7 @@ cast: {alice: {reference: alice}}
 `scenet check invalid-field.panel.yaml` says:
 
 ```text
-invalid-field.panel.yaml:2:16: invalid-field: Input should be 'long_shot', 'wide', 'full_shot', 'medium_full', 'cowboy', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'
+invalid-field.panel.yaml:2:16: invalid-field: Input should be 'long_shot', 'full_shot', 'medium_full_shot', 'cowboy_shot', 'medium_shot', 'medium_close_up', 'close_up', 'big_close_up' or 'extreme_close_up'
 ```
 
 Fixed:
@@ -1039,7 +1039,7 @@ staging:
 |---|---|
 | Level | error |
 | Says | A page cannot lay out what it says |
-| Keys | [`insets[].size`](language/page.md#insetssize), [`insets[].use`](language/page.md#insetsuse), [`page`](language/page.md#page), [`page.gutter`](language/page.md#pagegutter), [`page.margin`](language/page.md#pagemargin), [`page.size`](language/page.md#pagesize), [`page.tier_gutter`](language/page.md#pagetier_gutter), [`pages`](language/page.md#pages), [`pages[].tiers`](language/page.md#pagestiers), [`panels[].bleed`](language/page.md#panelsbleed), [`panels[].insets`](language/page.md#panelsinsets), [`panels[].use`](language/page.md#panelsuse), [`tiers[].columns`](language/page.md#tierscolumns), [`tiers[].panels`](language/page.md#tierspanels), [`tiers[].slant`](language/page.md#tiersslant) |
+| Keys | [`insets[].scale`](language/page.md#insetsscale), [`insets[].use`](language/page.md#insetsuse), [`page`](language/page.md#page), [`page.gutter`](language/page.md#pagegutter), [`page.margin`](language/page.md#pagemargin), [`page.size`](language/page.md#pagesize), [`page.tier_gutter`](language/page.md#pagetier_gutter), [`pages`](language/page.md#pages), [`pages[].tiers`](language/page.md#pagestiers), [`panels[].bleed`](language/page.md#panelsbleed), [`panels[].insets`](language/page.md#panelsinsets), [`panels[].use`](language/page.md#panelsuse), [`tiers[].columns`](language/page.md#tierscolumns), [`tiers[].panels`](language/page.md#tierspanels), [`tiers[].slant`](language/page.md#tiersslant) |
 | Since | 0.10 |
 
 **Why it happens.** `pages:` lays the panels of a scene out in tiers. Each placement must name a panel `panels:` defines, a panel can be on one page once, and the margins and gutters must leave room for every tier and every panel in it. A tier holds `panels:` or `columns:`, and two columns that are both stacks may not stand side by side, because readers go across them rather than down. Two insets in one panel must stay a gutter clear of each other. A slant leans the gutters between a tier's panels, so it needs two panels or more, no columns and no insets, and must leave every panel some width at its top and bottom. A panel bleeds only on a side of its frame that reaches the page's margin. A document with pages needs panels to lay out.
@@ -1718,7 +1718,7 @@ Checked as `yaml-merge-key.panel.yaml`:
 :beside: examples/gallery
 
 # A merge key, to copy another camera's keys into this one.
-camera: {<<: {shot: wide, angle: low}, shot: medium_shot}
+camera: {<<: {shot: long_shot, angle: low}, shot: medium_shot}
 cast: {alice: {reference: alice}}
 ```
 
@@ -2272,7 +2272,7 @@ script:
 |---|---|
 | Level | note |
 | Says | An inset is drawn over a face |
-| Keys | [`insets[].at`](language/page.md#insetsat), [`insets[].size`](language/page.md#insetssize), [`panels[].insets`](language/page.md#panelsinsets) |
+| Keys | [`insets[].at`](language/page.md#insetsat), [`insets[].scale`](language/page.md#insetsscale), [`panels[].insets`](language/page.md#panelsinsets) |
 | Since | 0.10 |
 | In the gallery | [An inset over a face](../gallery.md#an-inset-over-a-face) |
 
@@ -2303,7 +2303,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: top_right, size: 0.35}
+              - {use: clock, at: top_right, scale: 0.35}
 ```
 
 `scenet build inset-covers-face.scene.yaml` says:
@@ -2334,7 +2334,7 @@ pages:
       - panels:
           - use: street
             insets:
-              - {use: clock, at: bottom_left, size: 0.3}
+              - {use: clock, at: bottom_left, scale: 0.3}
 ```
 
 ### `italic-stand-in`

@@ -516,7 +516,7 @@ def _scene_panel(draw: st.DrawFn, cast: list[str], earlier: list[str]) -> dict[s
         # Only ever an earlier panel, so `over:` chains cannot form a cycle.
         panel["over"] = draw(st.sampled_from(earlier))
     if draw(st.booleans()):
-        shot = draw(st.sampled_from([ShotType.WIDE, ShotType.FULL_SHOT, ShotType.MEDIUM_SHOT]))
+        shot = draw(st.sampled_from([ShotType.LONG_SHOT, ShotType.FULL_SHOT, ShotType.MEDIUM_SHOT]))
         panel["camera"] = {"shot": shot.value}
     script = draw(st.lists(_event(cast), max_size=2))
     if script:
@@ -544,7 +544,7 @@ def _placement(
                 "at": draw(
                     st.sampled_from(["top_left", "top_right", "bottom_left", "bottom_right"])
                 ),
-                "size": draw(st.sampled_from([0.25, 0.3, 0.35])),
+                "scale": draw(st.sampled_from([0.25, 0.3, 0.35])),
                 "read": read,
             }
         ]
@@ -1080,7 +1080,7 @@ def _line_by_an_undrawn_figure(document: dict[str, Any], actor: str, _: st.DrawF
 
 
 def _duplicate_key(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
-    text = _dump(document) + "camera: {shot: wide}\n"
+    text = _dump(document) + "camera: {shot: long_shot}\n"
     return Mistake("duplicate-key", text, "duplicate-key", (), "camera")
 
 
@@ -1102,7 +1102,7 @@ def _unbalanced(document: dict[str, Any], actor: str, _: st.DrawFn) -> Mistake:
 
 def _truncated(document: dict[str, Any], actor: str, draw: st.DrawFn) -> Mistake:
     """Cut off in the middle of a flow mapping, as a document saved half-written is."""
-    text = _dump(document) + "camera: {shot: wide, angle"
+    text = _dump(document) + "camera: {shot: long_shot, angle"
     return Mistake("truncated", text, "syntax", (), None)
 
 
