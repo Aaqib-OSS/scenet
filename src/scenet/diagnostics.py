@@ -60,7 +60,6 @@ from scenet.assets.contract import (
 from scenet.compose import (
     DIRECTION_KEY,
     NOT_DEFAULTS,
-    OVER_KEY,
     PANELS_SHAPE,
     lowered,
     merge,
@@ -92,6 +91,7 @@ from scenet.frontends.common import (
     PYDANTIC_RULES,
     SITE,
     errors_of,
+    faults_of_defaults,
     normalise,
     normalise_layout,
     rule_for_pydantic,
@@ -1811,6 +1811,7 @@ def _diagnose_scene(
                 )
             if item not in found:
                 found.append(item)
+    found.extend(_unread_defaults(defaults, found, text, source))
 
     if deep and paged and not _errors(found):
         try:
@@ -1826,6 +1827,33 @@ def _diagnose_scene(
                 )
             )
     return found
+
+
+def _unread_defaults(
+    defaults: dict[str, Any], found: list[Diagnostic], text: str, source: Path | None
+) -> list[Diagnostic]:
+    """The faults in a scene's defaults that no panel's check found.
+
+    A default every panel overrides was read by none of them, and is written all the same.
+    One a panel inherits is in `found` already, where it is written.
+    """
+    # pydantic reports a value once, so only what the panels found is found twice; and a
+    # fault of a default's own value is never a validator's, so no message says so.
+    seen = {(item.rule, item.path) for item in found}
+    unread: list[Diagnostic] = []
+    for error in faults_of_defaults(defaults):
+        rule, path = rule_for_pydantic(error)
+        if (rule, path) not in seen:
+            unread.append(
+                Diagnostic(
+                    rule=rule,
+                    message=str(error["msg"]),
+                    path=path,
+                    source=source,
+                    region=locate(text, path) or DOCUMENT_START,
+                )
+            )
+    return unread
 
 
 def _diagnose_layout(
@@ -2232,10 +2260,12 @@ def _written_through(document: ScriptDocument, name: str) -> dict[str, Any]:
     both: what it inherits is written in the script, not in the front matter.
     """
     chain: list[dict[str, Any]] = []
-    while name in document.lines and len(chain) < len(document.lines):
-        written = document.lines[name].written
-        chain.append(dict(written))
-        name = str(written.get(OVER_KEY, ""))
+    over: str | None = name
+    # Each panel by the name the script gives it, `2-1` for `@over: 1` on page two; bounded,
+    # though a loop of `@over:` is refused before this is asked.
+    while over is not None and len(chain) < len(document.lines):
+        chain.append(dict(document.lines[over].written))
+        over = document.lines[over].over
     inherited: dict[str, Any] = {}
     for written in reversed(chain):
         inherited = merge(inherited, written)

@@ -255,6 +255,13 @@ def test_the_evidence_agrees(text: str, valid: bool):
     assert (not _check_errors(document)) is valid
 
 
+def test_a_mark_written_twice_agrees():
+    """A mark is drawn once, so a list that names one twice is refused by both."""
+    document = "cast: {alice: {reference: alice, marks: [plewds, plewds]}}" + chr(10)
+    _assert_agree(document, note=_ignore)
+    assert _check_errors(document)
+
+
 @pytest.mark.parametrize(
     ("entry", "path"),
     [
@@ -327,6 +334,21 @@ def test_a_scene_agrees(text: str, valid: bool):
     )
     _assert_agree(document, SCENE, _ignore)
     assert (not _check_errors(document, SCENE)) is valid
+
+
+@pytest.mark.parametrize(
+    ("default", "panel"),
+    [("camera: ''", "camera: {shot: long_shot}"), ("camera: {kind: x}", "camera: null")],
+    ids=["of the wrong shape", "with a key it does not have"],
+)
+def test_a_default_every_panel_overrides_agrees(default: str, panel: str):
+    """A default no panel inherits is written all the same, and the schema reads it."""
+    document = (
+        f"cast: {{alice: {{reference: alice}}}}\n{default}\n"
+        f"panels: {{a: {{{panel}}}, b: {{over: a}}}}\n"
+    )
+    _assert_agree(document, SCENE, _ignore)
+    assert _check_errors(document, SCENE)
 
 
 def test_a_scene_panel_names_no_puppet_it_inherits():

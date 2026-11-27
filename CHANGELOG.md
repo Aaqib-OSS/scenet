@@ -133,6 +133,16 @@ it is written, and says what to write instead.
   in `.svg` is the SVG, as before; any other extension, `-o out.pdf` or `-o out.png`, is now a
   usage error, exit 2, with nothing written. Every SVG written ends in `.svg`.
 
+- **Every puppet declares a core vocabulary of poses and expressions** (#360): the poses
+  `standing_neutral`, `arms_crossed`, `hands_on_hips` and `pointing`, and the expressions
+  `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing` and
+  `shouting`, which every puppet with face features declares (one with none takes any
+  expression, drawn alike). A document that names only these is valid with any puppet; a puppet
+  file that leaves one out is a `puppet-file` finding, in that file. A puppet may declare more of its own.
+  The JSON Schemas offer the core names for every `pose` and `expression`, and for a member whose
+  `reference` names a shipped puppet, that puppet's names only, so `pose: shrugging` on `alice`
+  is refused as it is written; `scenet schema --puppet` requires the vocabulary. The puppet
+  reference lists it in one table. The gallery's Pip declares it, and example 69 draws it.
 - **A `null` in a mapping inside a list is a key not written** (#375), as it is in any other
   mapping: `script: [{sfx: {text: BANG, hollow: null}}]` and `tiers: [{height: null, ...}]` were
   refused, and are read as if the key were left out. A list is never merged into, so there is
@@ -269,6 +279,17 @@ it is written, and says what to write instead.
   `scenet build` already printed for it, rather than a traceback. A source that vanishes while
   `build` reads it names the file in one line, as a missing file does.
 
+- **A comic-script panel drawn `@over:` a panel of its page is no longer blamed on the front
+  matter** in a script with pages: `@over: 1` on page two was looked up as page one's panel, and
+  what panel `2-1` wrote was taken for the front matter's. Found by mutation testing.
+- **The schemas say a mark is listed once**, as `scenet check` always has:
+  `marks: [plewds, plewds]` passed the schema and was refused by the check. Found by the schema
+  parity property.
+- **A scene default that every panel overrides is still checked**: `camera: ''` beside
+  `panels:`, with every panel writing its own camera, passed `scenet check` and built, while the
+  scene schema refused it. A default is now read as written, for what it holds on its own -- its
+  type, its words, its bounds, a key it does not have -- whichever panels inherit it; what needs
+  the rest of a panel is still the panels' to find. Found by the schema parity property.
 - **A cycle in depth order is found by `scenet check`** (#364): `a in_front_of b, b in_front_of
   a` passed the check and failed only in the solver, as `layout`; it is now `ordering-cycle`, at
   the relation that closes the cycle, as one left to right always was. No document is known to

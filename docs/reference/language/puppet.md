@@ -33,6 +33,26 @@ cast:
 staging: [alice ground_shared_with pip]
 ```
 
+## The core vocabulary
+
+**Normative.** Every puppet, shipped or supplied, declares every pose of the core vocabulary, and
+every puppet with a face every expression of it; a puppet with no face features has nothing for an
+expression to move, and takes every one, drawn alike. So a document that keeps to the core is valid
+with any puppet: a model that writes only
+these cannot name a pose the puppet lacks. A puppet may declare more poses and expressions, which
+are its own, Pip's `waving` and `arms_up` say; a document that names one works with that puppet.
+
+| | The core vocabulary |
+|---|---|
+| Poses | `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing` |
+| Expressions | `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting` |
+
+`standing_neutral` and `neutral` are what a cast member gets when it names no pose or expression. A
+puppet file that leaves out one of them is a `puppet-file` finding, in the puppet file, at its
+`poses` or `expressions`. The JSON Schema offers the core names for every cast member's `pose` and
+`expression`, and for one whose `reference` names a shipped puppet, that puppet's names only; a
+supplied puppet's own names are checked by `scenet check`, which reads the file.
+
 ## `name`
 
 <!-- facts: name -->
@@ -547,7 +567,7 @@ The anchor the line of sight starts at, which must be one of the puppet's [ancho
 ## `poses`
 
 <!-- facts: poses -->
-Named poses, each a set of joint angles.
+Named poses, each a set of joint angles. Every puppet declares the core poses: `standing_neutral`, `arms_crossed`, `hands_on_hips`, `pointing`; it may declare more of its own.
 
 | | |
 |---|---|
@@ -566,7 +586,7 @@ pose names must be declared. See [the example](#a-puppet-file).
 ## `expressions`
 
 <!-- facts: expressions -->
-Named expressions, each a state of brow, eyes and mouth.
+Named expressions, each a state of brow, eyes and mouth. Every puppet declares the core expressions: `neutral`, `happy`, `sad`, `angry`, `surprise`, `scared`, `bored`, `coy`, `laughing`, `shouting`; it may declare more of its own.
 
 | | |
 |---|---|

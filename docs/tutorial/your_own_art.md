@@ -363,12 +363,36 @@ poses:
     elbow_r: -155
     wrist_r: 20
 
+  # The core poses every puppet declares, so a document that keeps to them works with pip:
+  # the same joints as the shipped puppets, so the same angles.
+  arms_crossed:
+    elbow_l: -25
+    wrist_l: -75
+    elbow_r: 25
+    wrist_r: 75
+
+  pointing:
+    elbow_r: -85
+    wrist_r: 0
+    elbow_l: -8
+
+  hands_on_hips:
+    elbow_l: 20
+    wrist_l: -110
+    elbow_r: -20
+    wrist_r: 110
+
 expressions:
   neutral:  {}
   happy:    {mouth: smile}
   surprise: {brow: raised,     eyes: wide, mouth: open}
   scared:   {brow: angled_out, eyes: wide, mouth: small}
   sad:      {brow: angled_out, eyes: half, mouth: frown}
+  angry:    {brow: angled_in,  eyes: narrowed, mouth: frown}
+  bored:    {brow: lowered,    eyes: half, mouth: flat}
+  coy:      {brow: raised,     eyes: narrowed, mouth: small}
+  laughing: {brow: raised,     eyes: closed, mouth: grin}
+  shouting: {brow: angled_in,  eyes: wide, mouth: open}
 ```
 
 A puppet file is the character's geometric contract, nothing more:
@@ -455,6 +479,47 @@ panels:
       pip: {expression: scared, at: center}
     script:
       - say: {by: pip, text: "And so loud.", kind: whisper}
+
+  # Pip declares the core vocabulary every puppet does, so these work with any puppet.
+  cross:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {pose: arms_crossed, expression: angry, at: center}
+    script:
+      - say: {by: pip, text: "Why won't it stop?"}
+
+  call:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {pose: pointing, expression: shouting, at: center}
+    script:
+      - say: {by: pip, text: "Wait for us!", kind: shout}
+
+  wait:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {pose: hands_on_hips, expression: bored, at: center}
+    script:
+      - say: {by: pip, text: "Still waiting."}
+
+  ask:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {expression: coy, at: center}
+    script:
+      - say: {by: pip, text: "Can we go on the next one?"}
+
+  joke:
+    camera: {shot: cowboy_shot}
+    cast:
+      alice: null
+      pip: {expression: laughing, at: center}
+    script:
+      - say: {by: pip, text: "It's honking at us!"}
 
   gone:
     camera: {shot: full_shot}

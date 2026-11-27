@@ -15,7 +15,7 @@ import pytest
 import yaml
 from pydantic import BaseModel, ValidationError, model_validator
 
-from scenet.assets.contract import PuppetLibrary, PuppetSpec
+from scenet.assets.contract import CORE_POSES, PuppetLibrary, PuppetSpec
 from scenet.diagnostics import (
     _PYDANTIC_RULES,
     _RULE_FOR_ERROR_TYPE,
@@ -101,7 +101,8 @@ _FEATURELESS_PUPPET: dict[str, Any] = {
     "joints": {"root": {"parent": None}, "head": {"parent": "root", "offset": [0, -300]}},
     "anchors": {"eyes": {"joint": "head", "offset": [0, -10]}},
     "face": {"joint": "head", "radius": 60},
-    "poses": {"standing_neutral": {}},
+    # The core poses every puppet declares, at rest: a pose need move no joint.
+    "poses": {name: {} for name in CORE_POSES},
 }
 
 
@@ -1454,6 +1455,20 @@ class TestWhereAnInheritedFaultIsReported:
         found = diagnose_script(script)
         assert [(item.rule, item.path[0]) for item in found] == [(rule, "1"), (rule, "2")]
         assert [item.region.start.line for item in found if item.region] == [5, 9]
+
+    def test_a_panel_over_another_on_a_later_page_reports_at_its_heading(self):
+        """`@over: 1` on page two is panel `2-1`, as the script reads it, not page one's."""
+        script = (
+            "---\ncast: {ALICE: {reference: alice}}\n---\nPAGE ONE\n\nPANEL 1\nALICE\nHi.\n\n"
+            "PAGE TWO\n\nPANEL 1\n@cast: {ALICE: {reference: nobody}}\nALICE\nHello.\n\n"
+            "PANEL 2\n@over: 1\nALICE\nAgain.\n"
+        )
+        found = diagnose_script(script)
+        assert [(item.rule, item.path[0]) for item in found] == [
+            ("unknown-puppet", "2-1"),
+            ("unknown-puppet", "2-2"),
+        ]
+        assert [item.region.start.line for item in found if item.region] == [13, 17]
 
 
 RULE_ID = "invalid-identifier"
