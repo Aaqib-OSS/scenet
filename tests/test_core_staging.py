@@ -3,8 +3,9 @@
 Each of these was solved before and thrown away: joints and feature points lived only on the
 posed puppets, the camera only on `CompileResult`, who looks at whom only in the IR, and the
 place and the hour only as tones. An emitter reads Core and nothing else, so each is recorded
--- and each is left out of the JSON when unused, so a Core written before them reads and writes
-back byte for byte, and `format_version` stays 1.
+-- and each is left out of the JSON when unused. A Core written before them is format 1, which a
+reader upgrades (`tests/test_core_format.py` reads the whole corpus); here it is checked to say
+what it said.
 """
 
 import json
@@ -17,6 +18,7 @@ from scenet.geom import rounded
 from scenet.ir import CameraAngle, ShotType, TimeOfDay
 from scenet.pipeline import compile_file, compile_source
 from scenet.places import Place, place_of
+from tests.cores import drawn
 from tests.images import contract, png
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,7 +95,7 @@ class TestFeatures:
             " cast: {a: {reference: alice}}}"
         ).core
         actor = core.actor("a")
-        assert actor.face_marks == ()
+        assert drawn(actor).face_marks == ()
         assert {"eye_l", "eye_r", "nose"} <= set(actor.features)
 
     def test_the_expression_does_not_move_them(self):
@@ -146,7 +148,7 @@ class TestCamera:
                 f"{{camera: {{angle: {angle.value}}}, cast: {{a: {{reference: alice}}}}}}"
             ).core
             assert core.camera is not None
-            assert core.camera.angle is angle
+            assert core.camera.angle == angle
 
     def test_a_camera_that_retreated_says_how_far(self):
         result = compile_source(
@@ -155,7 +157,7 @@ class TestCamera:
         )
         assert result.core.camera is not None
         assert result.core.camera.pullback < 1.0
-        assert result.core.camera.shot is ShotType.CLOSE_UP
+        assert result.core.camera.shot == ShotType.CLOSE_UP
 
     def test_there_is_none_for_a_cast_a_picture_draws(self):
         result = _figures()
@@ -183,8 +185,8 @@ class TestTheBackdrop:
             "{cast: {a: {reference: alice}}, setting: {place: street, time: night}}"
         ).core.backdrop
         assert backdrop is not None
-        assert backdrop.place is Place.STREET
-        assert backdrop.time is TimeOfDay.NIGHT
+        assert backdrop.place == Place.STREET
+        assert backdrop.time == TimeOfDay.NIGHT
 
     def test_masses_written_out_as_a_place_are_that_place(self):
         """The same matcher the description names the place by: one answer, not two."""
@@ -193,7 +195,7 @@ class TestTheBackdrop:
         ).core.backdrop
         assert written is not None
         assert place_of(()) is None
-        assert written.place is Place.DOCKS
+        assert written.place == Place.DOCKS
 
     def test_masses_of_no_place_have_none(self):
         backdrop = compile_source(
@@ -201,7 +203,7 @@ class TestTheBackdrop:
         ).core.backdrop
         assert backdrop is not None
         assert backdrop.place is None
-        assert backdrop.time is TimeOfDay.DAY
+        assert backdrop.time == TimeOfDay.DAY
         assert (
             "place"
             not in json.loads(
@@ -218,7 +220,7 @@ class TestTheBackdrop:
         ).core.backdrop
         assert backdrop is not None
         assert backdrop.atmosphere is None
-        assert backdrop.time is TimeOfDay.DUSK
+        assert backdrop.time == TimeOfDay.DUSK
 
     def test_nothing_is_said_of_a_picture_s_place_or_hour(self):
         """They are in the picture, which the compiler has never seen."""
@@ -231,10 +233,9 @@ class TestTheBackdrop:
 
 class TestOldDocuments:
     @pytest.mark.parametrize("path", sorted(OLD.glob("*.core.json")), ids=lambda path: path.name)
-    def test_a_core_written_before_reads_and_writes_as_it_did(self, path: Path):
+    def test_a_core_written_before_still_says_what_it_said(self, path: Path):
         text = path.read_text(encoding="utf-8")
         core = PanelCore.from_json(text)
-        assert core.to_json() == text
         assert core.camera is None
         assert all(actor.joints == {} and actor.features == {} for actor in core.actors)
 
@@ -242,9 +243,9 @@ class TestOldDocuments:
         names = {path.name for path in OLD.glob("*.core.json")}
         assert len(names) >= 5
 
-    def test_the_format_version_is_still_one(self):
-        assert CORE_FORMAT_VERSION == 1
-        assert json.loads(_duel().to_json())["format_version"] == 1
+    def test_the_format_version_is_two_point_nought(self):
+        assert CORE_FORMAT_VERSION == "2.0"
+        assert json.loads(_duel().to_json())["format_version"] == "2.0"
 
 
 class TestTheGallery:

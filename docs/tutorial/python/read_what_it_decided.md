@@ -52,7 +52,7 @@ from pathlib import Path
 from scenet import compile_file
 
 core = compile_file(Path("talk.panel.yaml")).core
-print(core.width, core.height, core.camera.shot.value, "scale", core.camera.scale)
+print(core.width, core.height, core.camera.shot, "scale", core.camera.scale)
 
 alice = core.actor("alice")
 print(alice.reference, alice.pose, "at", alice.transform.x, "depth", alice.depth)
@@ -100,13 +100,15 @@ print(restored == core)
 ```
 
 ```text
-['actors', 'backdrop', 'balloons', 'camera', 'captions', 'description', 'format_version', 'height', 'width']
-1 ['I know.']
+['$schema', 'actors', 'balloons', 'camera', 'description', 'format', 'format_version', 'height', 'units', 'width']
+2.0 ['I know.']
 True
 ```
 
-`format_version` is the Core format's own version. It changes when a release changes what
-a field means, and `from_json` refuses a Core of another one rather than draw it wrong.
+`format_version` is the Core format's own version, `major.minor`. `from_json` upgrades a Core
+of format 1, reads a newer minor of format 2 and says what it left out, and refuses another major
+rather than draw it wrong: [the format](../../reference/panel_core.md#reading-which-versions-and-what-to-do-with-what-it-does-not-know)
+says how.
 
 ## Edit a Core, and draw it again
 
