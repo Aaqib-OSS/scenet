@@ -27,7 +27,8 @@ A panel is one image, `role="img"`, named by one `<title>`, its first child:
 
   A spoken caption names its speaker as a caption when that character is drawn in the panel:
   `Maya, caption: Hello.` When the speaker is not drawn, the label says so:
-  `Maya, off panel: Hello.` The SVG title, the playground's **Screen reader** tab and the
+  `Maya, off panel: Hello.` A character is drawn when the panel stages them or they speak in
+  it: one only cued as `CAP/MAYA` is not. The SVG title, the playground's **Screen reader** tab and the
   semantics export use this same label.
 - **All of it is the name, and nothing else.** A screen reader always reads an image's name, and
   often does not read its description, so the words are not left to a description. Nor is

@@ -14,6 +14,7 @@ read whole, sound effects in their place in the order whatever order they are pa
 Lettering stays outlined. `aria=False` is exactly the SVG written before any of this.
 """
 
+import json
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -24,9 +25,11 @@ from scenet.cli import main
 from scenet.core import PanelCore
 from scenet.emit.debug_svg import render_debug
 from scenet.emit.page import render_page, render_pages
+from scenet.emit.semantics import render_semantics
 from scenet.emit.strip import render_strip
 from scenet.emit.svg import render
 from scenet.pipeline import Book
+from tests.images import contract, png
 from tests.invariants import (
     accessible_name,
     assert_accessible,
@@ -136,11 +139,21 @@ class TestAPanel:
 class TestSpokenCaption:
     def test_a_drawn_speaker_is_not_labelled_off_panel_in_the_svg_title(self):
         book = compile_script(
-            '---\ncast: {MAYA: {reference: alice}}\n---\nPANEL 1\nCAP/MAYA: "Hello."\n'
+            '---\ncast: {MAYA: {reference: alice}}\n---\nPANEL 1\nMAYA: Hi.\nCAP/MAYA: "Hello."\n'
         )
         core = book.panels["1"].core
         assert core.captions[0].label == "MAYA, caption: Hello."
         assert accessible_name(_root(render(core))).endswith("MAYA, caption: Hello.")
+
+    def test_a_cast_member_who_is_only_cued_as_a_caption_is_not_drawn(self):
+        """A comic script draws a character who speaks or is staged. One cast and cued only as
+        a caption has no actor in the panel, so the voice is off panel."""
+        book = compile_script(
+            '---\ncast: {MAYA: {reference: alice}}\n---\nPANEL 1\nCAP/MAYA: "Hello."\n'
+        )
+        core = book.panels["1"].core
+        assert core.actors == ()
+        assert core.captions[0].label == "MAYA, off panel: Hello."
 
     def test_a_speaker_who_is_not_drawn_remains_off_panel(self):
         book = compile_script(
@@ -149,6 +162,56 @@ class TestSpokenCaption:
         core = book.panels["1"].core
         assert core.captions[0].label == "CAROL, off panel: Hello."
         assert accessible_name(_root(render(core))).endswith("CAROL, off panel: Hello.")
+
+
+class TestASuppliedFigureIsDrawn:
+    def test_a_speaker_a_picture_draws_is_a_caption_and_one_it_does_not_is_off_panel(self):
+        core = compile_source(
+            "setting: {image: art/p.png}\ncast: {ana: {figure: ana}}\n"
+            "script:\n"
+            "  - caption: {text: Hello., kind: spoken, by: ana}\n"
+            "  - caption: {text: Hello., kind: spoken, by: carol}\n",
+            base={
+                "art/p.png": png(800, 600),
+                "art/p.art.yaml": contract(
+                    (800, 600), {"ana": {"face": {"center": [400, 200], "radius": 60}}}
+                ),
+            },
+        ).core
+        assert [caption.label for caption in core.captions] == [
+            "Ana, caption: Hello.",
+            "Carol, off panel: Hello.",
+        ]
+
+
+class TestAHostileSpeakerName:
+    """A drawn speaker is a cast id, and an id cannot hold markup. A voice that is not
+    drawn names anyone, so its name -- `<`, `&`, `"` -- reaches the label (#452), and the
+    label reaches the SVG title and the semantics export."""
+
+    def _core(self) -> PanelCore:
+        return compile_source(
+            "cast: {maya: {reference: alice}}\n"
+            "script: [{caption: {text: Hello., kind: spoken, by: 'a<b&c\"d'}}]\n"
+        ).core
+
+    def test_the_label_keeps_the_name_as_written(self):
+        assert self._core().captions[0].label == 'A<b&c"d, off panel: Hello.'
+
+    def test_the_svg_title_is_escaped_and_reads_back_as_the_label(self):
+        svg = render(self._core())
+        assert "<b&c" not in svg
+        assert "&lt;b&amp;c" in svg
+        assert accessible_name(_root(svg)).endswith('A<b&c"d, off panel: Hello.')
+
+    def test_the_semantics_export_holds_it_as_a_string_not_as_markup(self):
+        said = json.loads(render_semantics(self._core()))["lettering"][0]["label"]
+        assert said == 'A<b&c"d, off panel: Hello.'
+
+    def test_the_strip_is_still_well_formed(self):
+        svg = render_strip([("1", self._core())])
+        _root(svg)
+        assert "<b&c" not in svg
 
 
 class TestInlinedTogether:
