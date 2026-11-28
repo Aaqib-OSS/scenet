@@ -2663,7 +2663,7 @@ You what?!
 
 A script in the format Dark Horse asks for: a title page, counts, and captions written CAP and CAP/NAME.
 
-![A page of 3 panels. Dusk on the cliff path. Maya has climbed the last of the steps; Theo waits by the door. Caption: Port Ellis. The night the lamp went out. MAYA: Theo? The lamp is out -- THEO: -- because somebody forgot the oil. KEEPER, off panel: Who's up there? Closer. Maya points back down the path, furious. MAYA, shouting: Somebody! THEO, whispering: I was going to fetch it. Inside, the lamp blazes again. Both of them squint into the light. Sound effect, from THEO: FWOOMP. MAYA, off panel: -- and that was how the harbour got its light back.](images/gallery/31-dark-horse.page-1.svg)
+![A page of 3 panels. Dusk on the cliff path. Maya has climbed the last of the steps; Theo waits by the door. Caption: Port Ellis. The night the lamp went out. MAYA: Theo? The lamp is out -- THEO: -- because somebody forgot the oil. KEEPER, off panel: Who's up there? Closer. Maya points back down the path, furious. MAYA, shouting: Somebody! THEO, whispering: I was going to fetch it. Inside, the lamp blazes again. Both of them squint into the light. Sound effect, from THEO: FWOOMP. MAYA, caption: -- and that was how the harbour got its light back.](images/gallery/31-dark-horse.page-1.svg)
 
 [Open in the playground](https://creatoan.github.io/scenet/playground/#example=31-dark-horse.script) · [Read about it](howto/write_a_comic_script.md#a-script-as-publishers-ask-for-it)
 
@@ -3130,7 +3130,7 @@ VIGNETTE 8 : Ses yeux qui se rouvrent : on monte l'escalier.
 
 A script written as a screenwriter writes: sluglines, voices over and off screen, and a last panel recast with directives.
 
-![A strip of 3 panels. INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark. MAYA, off panel: Nobody had climbed those stairs in thirty years. KEEPER, off panel: Who's up there? MAYA, whispering: Don't answer him. Theo at the window. Far below, a lantern swings on the path. THEO: He has a lantern. RADIO, off panel: ...harbour patrol, do you read... MAYA: Then he has oil. INT. THE LAMP ROOM - LATER. Theo has gone. The keeper fills the doorway, his lantern raised. Off panel: Theo had gone for help. He took the long way. KEEPER: Thirty years. Who let you in? MAYA, off panel: I let myself in.](images/gallery/67-written-like-a-screenplay.strip.svg)
+![A strip of 3 panels. INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark. MAYA, caption: Nobody had climbed those stairs in thirty years. KEEPER, off panel: Who's up there? MAYA, whispering: Don't answer him. Theo at the window. Far below, a lantern swings on the path. THEO: He has a lantern. RADIO, off panel: ...harbour patrol, do you read... MAYA: Then he has oil. INT. THE LAMP ROOM - LATER. Theo has gone. The keeper fills the doorway, his lantern raised. Off panel: Theo had gone for help. He took the long way. KEEPER: Thirty years. Who let you in? MAYA, caption: I let myself in.](images/gallery/67-written-like-a-screenplay.strip.svg)
 
 [Open in the playground](https://creatoan.github.io/scenet/playground/#example=67-written-like-a-screenplay.script) · [Read about it](howto/write_a_comic_script.md#written-like-a-screenplay)
 

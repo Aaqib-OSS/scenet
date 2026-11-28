@@ -3,7 +3,7 @@
   <title>A strip of 3 panels.</title>
   <rect x="0" y="0" width="2789.6" height="678.4" fill="#ffffff" aria-hidden="true"/>
   <g id="panel-1" transform="translate(19.2 19.2)" role="img">
-  <title>INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark. MAYA, off panel: Nobody had climbed those stairs in thirty years. KEEPER, off panel: Who's up there? MAYA, whispering: Don't answer him.</title>
+  <title>INT. LIGHTHOUSE, THE LAMP ROOM - NIGHT. Maya and Theo by the dead lamp, in the dark. MAYA, caption: Nobody had climbed those stairs in thirty years. KEEPER, off panel: Who's up there? MAYA, whispering: Don't answer him.</title>
   <clipPath id="p1-frame"><rect x="0" y="0" width="900" height="640"/></clipPath>
   <g clip-path="url(#p1-frame)">
   <rect x="0" y="0" width="900" height="640" fill="#ffffff"/>
@@ -303,7 +303,7 @@
   </g>
   </g>
   <g id="panel-3" transform="translate(1870.4 19.2)" role="img">
-  <title>INT. THE LAMP ROOM - LATER. Theo has gone. The keeper fills the doorway, his lantern raised. Off panel: Theo had gone for help. He took the long way. KEEPER: Thirty years. Who let you in? MAYA, off panel: I let myself in.</title>
+  <title>INT. THE LAMP ROOM - LATER. Theo has gone. The keeper fills the doorway, his lantern raised. Off panel: Theo had gone for help. He took the long way. KEEPER: Thirty years. Who let you in? MAYA, caption: I let myself in.</title>
   <clipPath id="p3-frame"><rect x="0" y="0" width="900" height="640"/></clipPath>
   <g clip-path="url(#p3-frame)">
   <rect x="0" y="0" width="900" height="640" fill="#ffffff"/>
